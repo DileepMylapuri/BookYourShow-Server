@@ -5,9 +5,7 @@ let databaseConnection;
 
 module.exports = {
   connectToDb: (cb) => {
-    MongoClient.connect(process.env.MONGO_URI || "mongodb://localhost:27017",{
-        useUnifiedTopology: true
-    })
+    MongoClient.connect(process.env.MONGO_URI || "mongodb://localhost:27017")
       .then((client) => {
         databaseConnection = client.db('UserData');
         console.log('✅ MongoDB Connected to UserData...');
