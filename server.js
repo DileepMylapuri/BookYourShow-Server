@@ -14,7 +14,10 @@ const PORT = process.env.PORT || 4000;
 app.use(express.json());
 app.use(
   cors({
-    origin: "http://localhost:5173", // React frontend
+    origin: [
+      "http://localhost:5173",
+      "https://bookyourshow-client.onrender.com",
+    ],
     methods: ["GET", "POST"],
     credentials: true,
   })
