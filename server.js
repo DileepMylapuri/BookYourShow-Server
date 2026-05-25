@@ -122,6 +122,48 @@ connectToDb(async (err) => {
 
   const db = getDb();
   const usersCollection = db.collection("UserData");
+  const bookingsCollection = db.collection("Bookings");
+
+  // Get booked seats for a specific movie + theater + showtime slot
+  app.get("/api/seats", async (req, res) => {
+    try {
+      const { movieId, theaterId, showDateTime } = req.query;
+      if (!movieId || !theaterId || !showDateTime) {
+        return res.status(400).json({ message: "movieId, theaterId and showDateTime are required" });
+      }
+      const bookings = await bookingsCollection
+        .find({ movieId, theaterId, showDateTime })
+        .toArray();
+      const bookedSeats = bookings.flatMap((b) => b.seats.map((s) => s.seatId || s));
+      res.json({ bookedSeats });
+    } catch (error) {
+      console.error("Get seats error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Save a booking after payment
+  app.post("/api/book-seats", async (req, res) => {
+    try {
+      const { movieId, theaterId, showDateTime, seats, email, username } = req.body;
+      if (!movieId || !theaterId || !showDateTime || !seats || !seats.length) {
+        return res.status(400).json({ message: "Missing required booking fields" });
+      }
+      await bookingsCollection.insertOne({
+        movieId,
+        theaterId,
+        showDateTime,
+        seats,
+        email,
+        username,
+        bookedAt: new Date(),
+      });
+      res.status(201).json({ message: "Seats booked successfully" });
+    } catch (error) {
+      console.error("Book seats error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   // Signup
   app.post("/api/signup", async (req, res) => {
