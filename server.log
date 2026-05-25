@@ -1,0 +1,4 @@
+[dotenv@17.2.2] injecting env (6) from .env -- tip: 📡 auto-backup env with Radar: https://dotenvx.com/radar
+MONGO_URI: ❌ Missing
+✅ MongoDB Connected to UserData...
+🚀 Backend running on http://localhost:4000
