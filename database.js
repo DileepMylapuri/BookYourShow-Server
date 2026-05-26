@@ -5,7 +5,6 @@ let databaseConnection;
 
 module.exports = {
   connectToDb: (cb) => {
-    console.log("MONGO_URI:", process.env.MONGO_URI ? "✅ Found" : "❌ Missing");
     MongoClient.connect(process.env.MONGO_URI || "mongodb://localhost:27017")
       .then((client) => {
         databaseConnection = client.db('UserData');
