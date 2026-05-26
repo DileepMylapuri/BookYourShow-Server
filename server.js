@@ -145,22 +145,38 @@ connectToDb(async (err) => {
   // Save a booking after payment
   app.post("/api/book-seats", async (req, res) => {
     try {
-      const { movieId, theaterId, showDateTime, seats, email, username } = req.body;
+      const { movieId, theaterId, showDateTime, seats, email, username, movie, theater, totalAmount } = req.body;
       if (!movieId || !theaterId || !showDateTime || !seats || !seats.length) {
         return res.status(400).json({ message: "Missing required booking fields" });
       }
-      await bookingsCollection.insertOne({
+      const result = await bookingsCollection.insertOne({
         movieId,
         theaterId,
         showDateTime,
         seats,
         email,
         username,
+        movie: movie || null,
+        theater: theater || null,
+        totalAmount: totalAmount || seats.reduce((s, seat) => s + (seat.price || 0), 0),
         bookedAt: new Date(),
       });
-      res.status(201).json({ message: "Seats booked successfully" });
+      res.status(201).json({ message: "Seats booked successfully", bookingId: result.insertedId });
     } catch (error) {
       console.error("Book seats error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get a single booking by ID
+  app.get("/api/bookings/:id", async (req, res) => {
+    try {
+      const { ObjectId } = require("mongodb");
+      const booking = await bookingsCollection.findOne({ _id: new ObjectId(req.params.id) });
+      if (!booking) return res.status(404).json({ message: "Booking not found" });
+      res.json(booking);
+    } catch (error) {
+      console.error("Get booking error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
