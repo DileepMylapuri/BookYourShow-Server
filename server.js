@@ -100,6 +100,24 @@ app.get("/api/movie/:id/reviews", async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+app.get("/api/movie/:id/videos", async (req, res) => {
+  try {
+    const response = await axios.get(`${TMDB_BASE_URL}/movie/${req.params.id}/videos`, { headers: TMDB_HEADERS });
+    res.json(response.data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get("/api/movies/recent", async (req, res) => {
+  try {
+    const today = new Date().toISOString().split("T")[0];
+    const response = await axios.get(
+      `${TMDB_BASE_URL}/discover/movie?region=IN&sort_by=release_date.desc&release_date.lte=${today}`,
+      { headers: TMDB_HEADERS }
+    );
+    res.json(response.data);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 // ── Auth routes ──────────────────────────────────────────────────────
 
 app.post("/api/signup", async (req, res) => {
