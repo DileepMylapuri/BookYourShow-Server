@@ -185,12 +185,12 @@ app.post("/api/send-booking-email", async (req, res) => {
       ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
       : "https://via.placeholder.com/500x750?text=No+Poster";
 
+    console.log("📧 EMAIL_USER:", process.env.EMAIL_USER);
+    console.log("📧 EMAIL_PASS set:", !!process.env.EMAIL_PASS);
+
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
+      service: "gmail",
       auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-      tls: { rejectUnauthorized: false },
     });
 
     const htmlContent = `
@@ -236,7 +236,8 @@ app.post("/api/send-booking-email", async (req, res) => {
 
     return res.status(200).json({ message: "Booking email sent successfully!" });
   } catch (error) {
-    console.error("Email sending failed:", error);
+    console.error("❌ Email sending failed:", error.message);
+    console.error("❌ Full error:", JSON.stringify(error, null, 2));
     res.status(500).json({ message: "Failed to send booking email", error: error.message });
   }
 });
