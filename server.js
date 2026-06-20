@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const { connectToDb, getDb } = require("./database");
 const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 dotenv.config();
 const app = express();
@@ -185,16 +186,6 @@ app.post("/api/send-booking-email", async (req, res) => {
       ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
       : "https://via.placeholder.com/500x750?text=No+Poster";
 
-    console.log("📧 EMAIL_USER:", process.env.EMAIL_USER);
-    console.log("📧 EMAIL_PASS set:", !!process.env.EMAIL_PASS);
-
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-    });
-
     const htmlContent = `
   <div style="background-color:#f0f0f0;padding:20px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
     <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:480px;margin-bottom:12px;">
@@ -229,17 +220,23 @@ app.post("/api/send-booking-email", async (req, res) => {
     </table>
   </div>`;
 
-    await transporter.sendMail({
-      from: `"BookYourShow" <${process.env.EMAIL_USER}>`,
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error: sendError } = await resend.emails.send({
+      from: "BookYourShow <onboarding@resend.dev>",
       to: email,
       subject: `🍿 Booking Confirmed: ${movie.title}`,
       html: htmlContent,
     });
 
+    if (sendError) {
+      console.error("❌ Resend error:", sendError);
+      return res.status(500).json({ message: "Failed to send email", error: sendError.message });
+    }
+
+    console.log("✅ Email sent successfully to:", email);
     return res.status(200).json({ message: "Booking email sent successfully!" });
   } catch (error) {
     console.error("❌ Email sending failed:", error.message);
-    console.error("❌ Full error:", JSON.stringify(error, null, 2));
     res.status(500).json({ message: "Failed to send booking email", error: error.message });
   }
 });
