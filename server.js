@@ -174,9 +174,13 @@ app.post("/api/send-booking-email", async (req, res) => {
   try {
     const { email, username, movie, theater, showDateTime, seats, totalAmount } = req.body;
     console.log("📧 Sending booking email to:", email, "| Movie:", movie?.title);
+    console.log("📧 RESEND_API_KEY set:", !!process.env.RESEND_API_KEY);
 
     if (!email || !movie || !theater || !seats)
       return res.status(400).json({ error: "Incomplete required booking details" });
+
+    if (!process.env.RESEND_API_KEY)
+      return res.status(500).json({ error: "Email service not configured" });
 
     const seatList = Array.isArray(seats)
       ? seats.map((s) => s.seatId || s).join(", ")
