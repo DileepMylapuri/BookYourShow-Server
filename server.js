@@ -184,44 +184,126 @@ app.post("/api/send-booking-email", async (req, res) => {
     const seatList = Array.isArray(seats)
       ? seats.map((s) => s.seatId || s).join(", ")
       : "N/A";
+    const seatCount = Array.isArray(seats) ? seats.length : 1;
     const formattedAmount = Number(totalAmount || 0).toFixed(2);
     const posterUrl = movie.poster_path
       ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
       : "https://via.placeholder.com/500x750?text=No+Poster";
+    const bookingId = "BYS" + Date.now().toString().slice(-8).toUpperCase();
+    const showDate = showDateTime?.split(" | ")?.[0] ?? "";
+    const showTime = showDateTime?.split(" | ")?.[1] ?? "";
 
-    const htmlContent = `
-  <div style="background-color:#f0f0f0;padding:20px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:480px;margin-bottom:12px;">
-      <tr><td style="background-color:#FFD740;border-radius:10px;padding:14px 16px;">
-        <p style="margin:0;font-size:13.5px;font-weight:500;color:#1a1a1a;">
-          Ticket shared on the contact details provided, have it handy on your phone while entering the venue
-        </p>
-      </td></tr>
+    const htmlContent = `<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:20px 0;">
+<tr><td align="center">
+<table width="520" border="0" cellpadding="0" cellspacing="0" style="max-width:520px;width:100%;">
+
+  <!-- HEADER -->
+  <tr><td style="background:#E8212B;border-radius:12px 12px 0 0;padding:18px 24px;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0"><tr>
+      <td>
+        <span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;">book</span><span style="font-size:22px;font-weight:900;color:#FFD700;letter-spacing:-0.5px;">your</span><span style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px;">show</span>
+      </td>
+      <td align="right">
+        <span style="font-size:11px;color:rgba(255,255,255,0.85);font-weight:500;">BOOKING CONFIRMED</span><br>
+        <span style="font-size:10px;color:rgba(255,255,255,0.65);">#${bookingId}</span>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- YELLOW NOTICE -->
+  <tr><td style="background:#FFF3CD;padding:10px 24px;border-left:4px solid #FFD700;">
+    <p style="margin:0;font-size:12px;color:#6B4C00;font-weight:500;">&#128246; Your ticket has been shared on the contact details provided. Please keep it handy at the venue.</p>
+  </td></tr>
+
+  <!-- MOVIE SECTION -->
+  <tr><td style="background:#fff;padding:20px 24px;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0"><tr>
+      <td width="90" style="vertical-align:top;">
+        <img src="${posterUrl}" alt="${movie.title}" width="85" style="border-radius:8px;display:block;height:125px;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,0.18);">
+      </td>
+      <td style="vertical-align:top;padding-left:16px;">
+        <h2 style="margin:0 0 6px;font-size:18px;font-weight:800;color:#1a1a1a;line-height:1.2;">${movie.title}</h2>
+        <p style="margin:0 0 10px;font-size:11px;color:#E8212B;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">Hindi | UA</p>
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="padding-right:16px;">
+              <p style="margin:0;font-size:10px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;">Date</p>
+              <p style="margin:3px 0 0;font-size:13px;font-weight:700;color:#1a1a1a;">${showDate}</p>
+            </td>
+            <td>
+              <p style="margin:0;font-size:10px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;">Time</p>
+              <p style="margin:3px 0 0;font-size:13px;font-weight:700;color:#1a1a1a;">${showTime}</p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:10px 0 0;font-size:11px;color:#555;">&#128205; ${theater.name}</p>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- DOTTED DIVIDER (perforated effect) -->
+  <tr><td style="background:#fff;position:relative;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0"><tr>
+      <td width="22" style="background:#f4f4f4;border-radius:0 50% 50% 0;height:22px;"></td>
+      <td style="border-top:2px dashed #ddd;height:1px;"></td>
+      <td width="22" style="background:#f4f4f4;border-radius:50% 0 0 50%;height:22px;"></td>
+    </tr></table>
+  </td></tr>
+
+  <!-- SEAT & TICKET DETAILS -->
+  <tr><td style="background:#fff;padding:16px 24px;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="width:50%;padding-bottom:14px;vertical-align:top;">
+          <p style="margin:0;font-size:10px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;">Seats</p>
+          <p style="margin:4px 0 0;font-size:14px;font-weight:800;color:#1a1a1a;">${seatList}</p>
+        </td>
+        <td style="width:50%;padding-bottom:14px;vertical-align:top;">
+          <p style="margin:0;font-size:10px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;">No. of Tickets</p>
+          <p style="margin:4px 0 0;font-size:14px;font-weight:800;color:#1a1a1a;">${seatCount}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="vertical-align:top;">
+          <p style="margin:0;font-size:10px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;">Booked For</p>
+          <p style="margin:4px 0 0;font-size:13px;font-weight:700;color:#1a1a1a;">${username || email}</p>
+        </td>
+        <td style="vertical-align:top;">
+          <p style="margin:0;font-size:10px;color:#888;text-transform:uppercase;font-weight:600;letter-spacing:0.4px;">Booking ID</p>
+          <p style="margin:4px 0 0;font-size:13px;font-weight:700;color:#E8212B;">${bookingId}</p>
+        </td>
+      </tr>
     </table>
-    <table align="center" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width:480px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.10);">
-      <tr><td style="padding:20px;">
-        <table width="100%" border="0" cellpadding="0" cellspacing="0"><tr>
-          <td width="90" style="vertical-align:top;padding-right:16px;">
-            <img src="${posterUrl}" alt="Poster" width="90" style="border-radius:8px;height:120px;object-fit:cover;">
-          </td>
-          <td style="vertical-align:top;">
-            <h2 style="margin:0 0 8px;font-size:17px;font-weight:700;color:#1a1a1a;">${movie.title}</h2>
-            <p style="margin:0 0 5px;font-size:13px;color:#555;">${showDateTime}</p>
-            <p style="margin:0;font-size:13px;color:#555;">${theater.name}</p>
-          </td>
-        </tr></table>
-      </td></tr>
-      <tr><td style="padding:12px 20px;text-align:center;">
-        <p style="margin:0;font-size:14px;font-weight:700;color:#1a1a1a;">Seats: ${seatList}</p>
-      </td></tr>
-      <tr><td style="border-top:1px solid #eee;padding:12px 20px;">
-        <table width="100%" border="0" cellpadding="0" cellspacing="0"><tr>
-          <td style="font-size:15px;font-weight:600;color:#1a1a1a;">Total Amount</td>
-          <td style="text-align:right;font-size:15px;font-weight:600;color:#1a1a1a;">&#8377;${formattedAmount}</td>
-        </tr></table>
-      </td></tr>
-    </table>
-  </div>`;
+  </td></tr>
+
+  <!-- TOTAL AMOUNT -->
+  <tr><td style="background:#1a1a1a;padding:14px 24px;border-radius:0 0 12px 12px;">
+    <table width="100%" border="0" cellpadding="0" cellspacing="0"><tr>
+      <td>
+        <p style="margin:0;font-size:12px;color:rgba(255,255,255,0.6);text-transform:uppercase;letter-spacing:0.5px;">Total Amount Paid</p>
+        <p style="margin:4px 0 0;font-size:22px;font-weight:900;color:#fff;">&#8377;${formattedAmount}</p>
+      </td>
+      <td align="right">
+        <div style="background:#E8212B;border-radius:8px;padding:8px 14px;display:inline-block;">
+          <p style="margin:0;font-size:11px;color:#fff;font-weight:700;">&#10003; CONFIRMED</p>
+        </div>
+      </td>
+    </tr></table>
+  </td></tr>
+
+  <!-- FOOTER NOTE -->
+  <tr><td style="padding:14px 0 4px;text-align:center;">
+    <p style="margin:0;font-size:11px;color:#aaa;">This is an automated booking confirmation from <strong>BookYourShow</strong>.</p>
+    <p style="margin:4px 0 0;font-size:11px;color:#aaa;">Please carry a valid photo ID to the venue.</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body></html>`;
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { error: sendError } = await resend.emails.send({
