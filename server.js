@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const { connectToDb, getDb } = require("./database");
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 dotenv.config();
 const app = express();
@@ -173,13 +173,12 @@ app.post("/api/send-booking-email", async (req, res) => {
   try {
     const { email, username, movie, theater, showDateTime, seats, totalAmount } = req.body;
     console.log("📧 Sending booking email to:", email, "| Movie:", movie?.title);
-    console.log("📧 EMAIL_USER:", process.env.EMAIL_USER);
-    console.log("📧 EMAIL_PASS set:", !!process.env.EMAIL_PASS);
+    console.log("📧 RESEND_API_KEY set:", !!process.env.RESEND_API_KEY);
 
     if (!email || !movie || !theater || !seats)
       return res.status(400).json({ error: "Incomplete required booking details" });
 
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS)
+    if (!process.env.RESEND_API_KEY)
       return res.status(500).json({ error: "Email service not configured" });
 
     const seatList = Array.isArray(seats)
@@ -224,22 +223,19 @@ app.post("/api/send-booking-email", async (req, res) => {
     </table>
   </div>`;
 
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"BookYourShow" <${process.env.EMAIL_USER}>`,
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const { error: sendError } = await resend.emails.send({
+      from: "BookYourShow <onboarding@resend.dev>",
+      replyTo: process.env.EMAIL_USER,
       to: email,
       subject: `🍿 Booking Confirmed: ${movie.title}`,
       html: htmlContent,
     });
+
+    if (sendError) {
+      console.error("❌ Resend error:", sendError);
+      return res.status(500).json({ message: "Failed to send email", error: sendError.message });
+    }
 
     console.log("✅ Email sent successfully to:", email);
     return res.status(200).json({ message: "Booking email sent successfully!" });
